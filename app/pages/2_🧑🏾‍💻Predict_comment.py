@@ -1,18 +1,15 @@
-import pickle
 import streamlit as st
 import pandas as pd
 import mlflow
-
-
-import mlflow
 from mlflow.sklearn import load_model
+import mysql.connector
 
 mlflow.set_tracking_uri("http://minio:9000")
 
-uri = "s3://mlflow/5/dae0d9e1a0a642d1afd024f71a4db0ac/artifacts/model"
+uri = "s3://mlflow/8/a4e8c20ccb2c449f902fc6c955e3f298/artifacts/model"
 model = mlflow.sklearn.load_model(uri)
 
-t_uri = "s3://mlflow/5/dae0d9e1a0a642d1afd024f71a4db0ac/artifacts/text_vectorizer"
+t_uri = "s3://mlflow/8/a4e8c20ccb2c449f902fc6c955e3f298/artifacts/text_vectorizer"
 # Load model as a PyFuncModel.
 vector = mlflow.sklearn.load_model(t_uri)
 
@@ -28,20 +25,18 @@ def predict(text):
 
 
 def main():
-    st.title("Phân loại cảm xúc văn bản")
+    st.title("Comment sentiment classification")
+    product_id_input = st.text_input("ProductID", "")
+    text_input = st.text_area("Comment", "")
 
-    # Tạo một ô để nhập văn bản
-    text_input = st.text_area("Nhập văn bản", "")
-
-    # Tạo nút để thực hiện dự đoán
-    if st.button("Dự đoán"):
-        if text_input:
+    if st.button("Predict"):
+        if text_input and product_id_input:
             prediction, max_pro = predict(text_input)
-            st.write("Kết quả dự đoán:", prediction[0])
+            st.write("Prediction:", prediction[0])
+            st.write("Probability: ", max_pro)
         else:
-            st.write("Nhập comment của bạn")
+            st.write("Please enter both productid and comment")
 
 
 if __name__ == "__main__":
     main()
-    
