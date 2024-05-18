@@ -11,7 +11,7 @@ import os
 import time
 
 db = None
-# api key
+# api key here
 
 def init_database(user: str, password: str, host: str, database: str) -> SQLDatabase:
     db_uri = (
