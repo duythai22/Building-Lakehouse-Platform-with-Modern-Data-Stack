@@ -69,3 +69,11 @@ nltk
 matplotlib
 seaborn
 numpy
+
+dagstermill==0.21.7
+papermill==2.3.3
+ipython_genutils==0.2.0
+
+tensorflow
+tensorflow_hub
+tensorflow_text

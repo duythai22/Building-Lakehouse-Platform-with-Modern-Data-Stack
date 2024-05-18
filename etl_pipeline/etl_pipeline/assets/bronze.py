@@ -1,5 +1,6 @@
 from dagster import asset, AssetIn, Output, StaticPartitionsDefinition
 from datetime import datetime
+import pandas as pd
 import polars as pl
 
 COMPUTE_KIND = "SQL"
@@ -165,25 +166,32 @@ def bronze_payment(context) -> Output[pl.DataFrame]:
 # Tables from mysql
 @asset(
     description="Load table 'order_reviews' from MySQL database as polars DataFrame, and save to minIO",
-    io_manager_key="minio_io_manager",
-    required_resource_keys={"mysql_io_manager"},
+    #io_manager_key="minio_io_manager",
+    #required_resource_keys={"mysql_io_manager"},
     key_prefix=["bronze", "orderreview"],
     compute_kind=COMPUTE_KIND,
     group_name=LAYER,
 )
 # Extract data từ mysql
-def bronze_order_review(context) -> Output[pl.DataFrame]:
-    query = "SELECT * FROM order_reviews;"
-    df_data = context.resources.mysql_io_manager.extract_data(query)
-    context.log.info(f"Table extracted with shape: {df_data.shape}")
+def bronze_order_review(context):
+    # query = "SELECT * FROM order_reviews;"
+    # df_data = context.resources.mysql_io_manager.extract_data(query)
+    # context.log.info(f"Table extracted with shape: {df_data.shape}")
+    data = [
+        ["An", 23, "Hà Nội"],
+        ["Bình", 21, "Đà Nẵng"],
+        ["Chi", 22, "Hồ Chí Minh"],
+        ["Dũng", 24, "Hải Phòng"],
+    ]
 
+    df_data = pd.DataFrame(data, columns=["Tên", "Tuổi", "Thành Phố"])
     return Output(
         value=df_data,
         metadata={
             "table": "order_reviews",
             "row_count": df_data.shape[0],
             "column_count": df_data.shape[1],
-            "columns": df_data.columns,
+            #"columns": df_data.columns,
         },
     )
 

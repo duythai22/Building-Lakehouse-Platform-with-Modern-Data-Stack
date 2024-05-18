@@ -1,41 +1,56 @@
 import streamlit as st
 import pandas as pd
-import mlflow
-from mlflow.sklearn import load_model
-import mysql.connector
-
-mlflow.set_tracking_uri("http://minio:9000")
-
-uri = "s3://mlflow/8/a4e8c20ccb2c449f902fc6c955e3f298/artifacts/model"
-model = mlflow.sklearn.load_model(uri)
-
-t_uri = "s3://mlflow/8/a4e8c20ccb2c449f902fc6c955e3f298/artifacts/text_vectorizer"
-# Load model as a PyFuncModel.
-vector = mlflow.sklearn.load_model(t_uri)
-
-
-def predict(text):
-    # Biến đổi văn bản sử dụng vectorizer
-    text_vectorized = vector.transform([text])
-    # Dự đoán sử dụng mô hình
-    prediction = model.predict(text_vectorized)
-    proba = model.predict_proba(text_vectorized)
-    max_proba = max(proba[0])
-    return prediction, max_proba
+import time
+from utils import predict, handle
 
 
 def main():
     st.title("Comment sentiment classification")
-    product_id_input = st.text_input("ProductID", "")
-    text_input = st.text_area("Comment", "")
+    st.markdown("Select input type")
+    upload_column = st.columns([2, 1])
 
-    if st.button("Predict"):
-        if text_input and product_id_input:
-            prediction, max_pro = predict(text_input)
-            st.write("Prediction:", prediction[0])
-            st.write("Probability: ", max_pro)
-        else:
-            st.write("Please enter both productid and comment")
+    # selection = None
+    # file upload
+    product_id_input = upload_column[0].text_input("ProductID", "")
+
+    file_upload = upload_column[0].expander(label="Upload a csv file")
+    uploaded_file = file_upload.file_uploader("Choose a file", type=["csv"])
+
+    text_select = upload_column[0].expander(label="Text")
+    text_input = text_select.text_area("Comment", "")
+
+    selection = upload_column[1].radio("Select input option", ["File", "Text"])
+    button = upload_column[1].button("Predict")
+
+    if selection == "File":
+        if button:
+            st.markdown(
+                "___________________________________________________________________"
+            )
+            with st.spinner(text="Model prediction ...."):
+                time.sleep(2)
+                df = pd.read_csv(uploaded_file, encoding="latin1")
+                predictions = []
+                probabilities = []
+                for text in df["Comment"]:
+                    handle(text)
+                    prediction, max_pro = predict(text)
+                    predictions.append(prediction[0])
+                    probabilities.append(max_pro)
+                df["Prediction"] = predictions
+                df["Probability"] = probabilities
+                st.dataframe(df)
+    else:
+        if button:
+            st.markdown(
+                "___________________________________________________________________"
+            )
+            with st.spinner(text="Model prediction ...."):
+                time.sleep(2)
+                handle(text_input)
+                prediction, max_pro = predict(text_input)
+                st.write("Prediction:", prediction[0])
+                st.write("Probability: ", max_pro)
 
 
 if __name__ == "__main__":
