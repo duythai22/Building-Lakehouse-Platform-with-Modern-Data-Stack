@@ -14,12 +14,6 @@ st.set_page_config(page_title="Chat with Olist", page_icon=":speech_balloon:")
 
 db = None
 
-os.environ["OPENAI_API_KEY"] = (
-    "sk-proj-J4APMdw84AOaaTG3y4XlT3BlbkFJLataRIU51qv6RlIuxnpg"
-)
-os.environ["LANGCHAIN_TRACING_V2"] = "true"
-os.environ["LANGCHAIN_API_KEY"] = "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"
-
 def init_database(user: str, password: str, host: str, database: str) -> SQLDatabase:
     db_uri = (
         f"mysql+mysqlconnector://{user}:admin@{host}/{database}?password={password}"
