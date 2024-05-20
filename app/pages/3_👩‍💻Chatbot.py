@@ -10,8 +10,15 @@ import streamlit as st
 import os
 import time
 
+st.set_page_config(page_title="Chat with Olist", page_icon=":speech_balloon:")
+
 db = None
-# api key here
+
+os.environ["OPENAI_API_KEY"] = (
+    "sk-proj-J4APMdw84AOaaTG3y4XlT3BlbkFJLataRIU51qv6RlIuxnpg"
+)
+os.environ["LANGCHAIN_TRACING_V2"] = "true"
+os.environ["LANGCHAIN_API_KEY"] = "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"
 
 def init_database(user: str, password: str, host: str, database: str) -> SQLDatabase:
     db_uri = (
@@ -41,8 +48,6 @@ def get_sql_chain(db):
 
     # llm = ChatOpenAI(model="gpt-4o")
     llm = ChatOpenAI(model="gpt-3.5-turbo-0125")
-    # llm = OpenAI(temperature=0)
-    # llm = ChatGroq(model="mixtral-8x7b-32768", temperature=0)
 
     def get_schema(_):
         return db.get_table_info()
@@ -53,32 +58,34 @@ def get_sql_chain(db):
 
 
 # add new function
-# def get_non_db_response(question: str, chat_history: list):
-#     template = """
-#     You are an intelligent assistant. A user is asking you a question that might not be related to the database. Provide a helpful response to the user's query.
+def get_non_db_response(question: str, chat_history: list):
+    template = """
+    You are an intelligent assistant. A user is asking you a question that might not be related to the database. Provide a helpful response to the user's query.
 
-#     Conversation History: {chat_history}
+    Conversation History: {chat_history}
 
-#     Question: {question}
-#     Response:
-#     """
+    Question: {question}
+    Response:
+    """
 
-#     prompt = ChatPromptTemplate.from_template(template)
-#     llm = ChatOpenAI(model="gpt-3.5-turbo-0125")
+    prompt = ChatPromptTemplate.from_template(template)
+    llm = ChatOpenAI(model="gpt-3.5-turbo-0125")
 
-#     chain = (
-#         RunnablePassthrough.assign(question=lambda _:question, chat_history=lambda _:chat_history)
-#         | prompt
-#         | llm
-#         | StrOutputParser()
-#     )
+    chain = (
+        RunnablePassthrough.assign(
+            question=lambda _: question, chat_history=lambda _: chat_history
+        )
+        | prompt
+        | llm
+        | StrOutputParser()
+    )
 
-#     return chain.invoke(
-#         {
-#             "question": question,
-#             "chat_history": chat_history,
-#         }
-#     )
+    return chain.invoke(
+        {
+            "question": question,
+            "chat_history": chat_history,
+        }
+    )
 
 
 def get_response(user_query: str, db: SQLDatabase, chat_history: list):
@@ -122,8 +129,6 @@ def get_response(user_query: str, db: SQLDatabase, chat_history: list):
 
     llm = ChatOpenAI(model="gpt-3.5-turbo-0125")
     # llm = ChatOpenAI(model="gpt-4o")
-    # llm = OpenAI(temperature=0)
-    # llm = ChatGroq(model="mixtral-8x7b-32768", temperature=0)
 
     chain = (
         RunnablePassthrough.assign(query=sql_chain).assign(
@@ -150,7 +155,8 @@ def get_response(user_query: str, db: SQLDatabase, chat_history: list):
         )
     except Exception as e:
         # return f"An error occurred while processing your query: {e}"
-        return f"The question is not related with database. Please ask new question."
+        # return f"The question is not related with database. Please ask new question."
+        return get_non_db_response(user_query, chat_history)
 
 
 if "chat_history" not in st.session_state:
@@ -161,14 +167,13 @@ if "chat_history" not in st.session_state:
     ]
 
 load_dotenv()
-
 if not db:
     db = init_database("root", "admin", "mysql", "olist")
 
 
 st.session_state.db = db
 
-st.set_page_config(page_title="Chat with Olist", page_icon=":speech_balloon:")
+# st.set_page_config(page_title="Chat with Olist", page_icon=":speech_balloon:")
 
 st.title("Chat with Olist")
 
@@ -199,25 +204,20 @@ for message in st.session_state.chat_history:
         with st.chat_message("Human", avatar="👩‍🎤"):
             st.markdown(message.content)
 
+
 user_query = st.chat_input("Type a message...")
 if user_query is not None and user_query.strip() != "":
     st.session_state.chat_history.append(HumanMessage(content=user_query))
 
     with st.chat_message("Human", avatar="👩‍🎤"):
         st.markdown(user_query)
-    with st.spinner("Please wait...AI is responding"):
-        with st.chat_message("AI", avatar="🤖"):
-            response = get_response(
-                user_query, st.session_state.db, st.session_state.chat_history
-            )
-
-            # sql_chain = get_sql_chain(st.session_state.db)
-            # qrr = sql_chain.invoke(
-            #     {"chat_history": st.session_state.chat_history, "question": user_query}
-            # )
-
-            # st.markdown(qrr)
-
-            st.markdown(response)
+    # with st.spinner("Please wait...AI is responding"):
+    with st.chat_message("AI", avatar="🤖"):
+        response = get_response(
+            user_query, st.session_state.db, st.session_state.chat_history
+        )
+        st.markdown(response)
 
     st.session_state.chat_history.append(AIMessage(content=response))
+
+

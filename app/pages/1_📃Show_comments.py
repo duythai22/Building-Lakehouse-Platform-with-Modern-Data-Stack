@@ -4,10 +4,7 @@ import mlflow
 from mlflow.sklearn import load_model
 import mysql.connector
 import matplotlib.pyplot as plt
-
-
-with open("style.css") as f:
-    st.markdown(f"<style> {f.read()}</style>", unsafe_allow_html=True)
+from utils import predict, handle
 
 conn = mysql.connector.connect(
     host="mysql",
@@ -26,24 +23,6 @@ def execute_query(query):
 
 
 mlflow.set_tracking_uri("http://minio:9000")
-
-uri = "s3://mlflow/8/a4e8c20ccb2c449f902fc6c955e3f298/artifacts/model"
-model = mlflow.sklearn.load_model(uri)
-
-t_uri = "s3://mlflow/8/a4e8c20ccb2c449f902fc6c955e3f298/artifacts/text_vectorizer"
-# Load model as a PyFuncModel.
-vector = mlflow.sklearn.load_model(t_uri)
-
-
-def predict(text):
-    # Biến đổi văn bản sử dụng vectorizer
-    text_vectorized = vector.transform([text])
-    # Dự đoán sử dụng mô hình
-    prediction = model.predict(text_vectorized)
-    proba = model.predict_proba(text_vectorized)
-    max_proba = max(proba[0])
-    return prediction, max_proba
-
 
 def main():
     product_id_input = st.text_input("ProductID","")
