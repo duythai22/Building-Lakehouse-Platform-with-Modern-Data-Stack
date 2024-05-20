@@ -14,6 +14,8 @@ st.set_page_config(page_title="Chat with Olist", page_icon=":speech_balloon:")
 
 db = None
 
+
+
 def init_database(user: str, password: str, host: str, database: str) -> SQLDatabase:
     db_uri = (
         f"mysql+mysqlconnector://{user}:admin@{host}/{database}?password={password}"
@@ -213,5 +215,3 @@ if user_query is not None and user_query.strip() != "":
         st.markdown(response)
 
     st.session_state.chat_history.append(AIMessage(content=response))
-
-
