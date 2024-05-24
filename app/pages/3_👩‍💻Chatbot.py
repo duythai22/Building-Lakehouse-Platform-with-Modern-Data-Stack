@@ -14,6 +14,11 @@ st.set_page_config(page_title="Chat with Olist", page_icon=":speech_balloon:")
 
 db = None
 
+os.environ["OPENAI_API_KEY"] = (
+    "sk-proj-Dknj6z0aVAAPQ2OSrwDAT3BlbkFJNYoJueO1YXgJASIHmGHx"
+)
+os.environ["LANGCHAIN_TRACING_V2"] = "true"
+os.environ["LANGCHAIN_API_KEY"] = "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"
 
 
 def init_database(user: str, password: str, host: str, database: str) -> SQLDatabase:
